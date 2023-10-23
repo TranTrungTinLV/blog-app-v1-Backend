@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+const bcrypt = require("bcrypt")
 //create schema
 const userSchema = new mongoose.Schema(
     {
@@ -98,6 +98,23 @@ const userSchema = new mongoose.Schema(
         timestamps: true,
     }
 );
+
+// === custom middleware to handle hashing password
+userSchema.pre('save', async function (next) {
+    if (!this.isModified("password")) {
+        next();
+    };
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+});
+
+//match password using mongoose methods
+userSchema.methods.isPasswordMatched = async function (enteredPassword) {
+    const isMatched = await bcrypt.compare(enteredPassword, this.password);
+    // console.log('Password matched:', isMatched);
+    return isMatched;
+}
 
 //virtual method to populate created post
 userSchema.virtual("posts", {
