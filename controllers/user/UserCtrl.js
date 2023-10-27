@@ -4,7 +4,8 @@ const expressAsyncHandler = require("express-async-handler")
 const validateMongoId = require("../../utils/validateMongodbID")
 const nodemailer = require("nodemailer")
 const Mailgen = require("mailgen");
-const crypto = require("crypto")
+const crypto = require("crypto");
+const cloudinaryUploadImg = require('../../utils/cloudinary');
 const userRegisterCtrl = expressAsyncHandler(async (req, res) => {
     //check if user Exist
     const userExist = await User.findOne({
@@ -356,14 +357,13 @@ const ForgotPassWordToken = expressAsyncHandler(async (req, res) => {
 //--------------------
 //Password reset
 //--------------------
-
 const passwordResetCtrl = expressAsyncHandler(async (req, res) => {
     const { token, password } = req.body;
     const hashedToken = crypto.createHash('sha256').update(token).digest("hex");
 
     //find this user by token 
     const user = await User.findOne({
-        passwordResetToken: hashedToken, 
+        passwordResetToken: hashedToken,
         passwordResetExpires: {
             $gt: Date.now()
         }
@@ -377,4 +377,21 @@ const passwordResetCtrl = expressAsyncHandler(async (req, res) => {
     await user.save();
     res.json(user)
 })
-module.exports = { userRegisterCtrl, loginUserCtrl, fetchUserCtrl, deleteUserCtrl, fetchUserDetailsCtrl, userProfileCtrl, updateUserCtrl, updatePassWordCtrl, followingUserCtrl, unFollowerCtrl, blockUserCtrl, unBlockUserCtrl, generationVerificationTokenCtrl, accountVerificationCtrl, ForgotPassWordToken, passwordResetCtrl };
+
+//---------------------
+//Profile upload photo
+//---------------------
+const profilePhotoUploadCtrl = expressAsyncHandler(async (req, res) => {
+    const { _id } = req.user;
+
+    // console.log(req.file)
+    const localPath = `public/images/profile/${req.file.fileName}.jpeg`;
+    //upload to cloudinary
+    const imgUploaded = await cloudinaryUploadImg(localPath);
+    const foundUser = await User.findByIdAndUpdate(_id, {
+        profilePhoto: imgUploaded?.url
+    }, { new: true })
+    console.log(imgUploaded)
+    res.json(foundUser)
+})
+module.exports = { userRegisterCtrl, loginUserCtrl, fetchUserCtrl, deleteUserCtrl, fetchUserDetailsCtrl, userProfileCtrl, updateUserCtrl, updatePassWordCtrl, followingUserCtrl, unFollowerCtrl, blockUserCtrl, unBlockUserCtrl, generationVerificationTokenCtrl, accountVerificationCtrl, ForgotPassWordToken, passwordResetCtrl, profilePhotoUploadCtrl };
