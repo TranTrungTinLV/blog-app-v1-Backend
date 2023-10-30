@@ -6,6 +6,7 @@ dotenv.config()
 const express = require('express');
 const userRoutes = require("./route/users/user");
 const { errorHandler,notFound } = require("./middlewares/error/errorMandler");
+const postRoute = require("./route/posts/post");
 
 const port = process.env.PORT || 4000
 const app = express();
@@ -15,6 +16,8 @@ app.use(bodyParser.json())
 dbConnect();
 //Register
 app.use('/api/users', userRoutes);
+//Post Route
+app.use("/api/posts",postRoute)
 //Login
 app.post("/api/users/login", (req, res) => {
     //business logic

@@ -5,6 +5,7 @@ const validateMongoId = require("../../utils/validateMongodbID")
 const nodemailer = require("nodemailer")
 const Mailgen = require("mailgen");
 const crypto = require("crypto");
+const fs = require('fs')
 const cloudinaryUploadImg = require('../../utils/cloudinary');
 const userRegisterCtrl = expressAsyncHandler(async (req, res) => {
     //check if user Exist
@@ -102,7 +103,7 @@ const userProfileCtrl = expressAsyncHandler(async (req, res) => {
     const { id } = req.params;
     validateMongoId(id);
     try {
-        const myProfile = await User.findById(id);
+        const myProfile = await User.findById(id).populate("post");
         res.json(myProfile)
     } catch (error) {
         res.json(error)
@@ -391,7 +392,9 @@ const profilePhotoUploadCtrl = expressAsyncHandler(async (req, res) => {
     const foundUser = await User.findByIdAndUpdate(_id, {
         profilePhoto: imgUploaded?.url
     }, { new: true })
+    //remove the saved img
+    fs.unlinkSync(localPath)
     console.log(imgUploaded)
-    res.json(foundUser)
+    res.json(imgUploaded)
 })
 module.exports = { userRegisterCtrl, loginUserCtrl, fetchUserCtrl, deleteUserCtrl, fetchUserDetailsCtrl, userProfileCtrl, updateUserCtrl, updatePassWordCtrl, followingUserCtrl, unFollowerCtrl, blockUserCtrl, unBlockUserCtrl, generationVerificationTokenCtrl, accountVerificationCtrl, ForgotPassWordToken, passwordResetCtrl, profilePhotoUploadCtrl };

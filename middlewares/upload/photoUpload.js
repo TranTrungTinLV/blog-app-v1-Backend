@@ -17,12 +17,13 @@ const multerFilter = (req, file, cb) => {
     }
 }
 
-const profilePhotoUpload = multer({
+const photoUpload = multer({
     storage: multerStorage,
     fileFilter: multerFilter,
     limits: { fieldSize: 1000000 }
 });
 
+//Image Resizing
 const profilePhotoResize = async (req, res, next) => {
     if (!req.file) return next();
     req.file.fileName = `user-${Date.now()}-${req.file.originalname}`;
@@ -39,5 +40,22 @@ const profilePhotoResize = async (req, res, next) => {
     next();
 }
 
+//Post Image Resizing
+const postImgResize = async (req, res, next) => {
+    if (!req.file) return next();
+    req.file.fileName = `user-${Date.now()}-${req.file.originalname}`;
+    console.log(`Resize`, req.file);
+    // Đọc file từ buffer
+    const image = await jimp.read(req.file.buffer);
 
-module.exports = { profilePhotoUpload, profilePhotoResize };
+    image.resize(500, 500);
+    // image.toFormat('jpeg');
+
+    // Đảm bảo bạn sử dụng req.file.fileName thay vì req.file.filename
+    await image.writeAsync(path.join(`public/images/posts/${req.file.fileName}.jpeg`));
+
+    next();
+}
+
+
+module.exports = { photoUpload, profilePhotoResize,postImgResize };

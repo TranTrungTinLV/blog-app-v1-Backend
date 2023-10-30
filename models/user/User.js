@@ -100,6 +100,12 @@ const userSchema = new mongoose.Schema(
     }
 );
 
+//virtual method to populate create post
+userSchema.virtual('posts', {
+    ref: 'Post',
+    foreignField: 'user',
+    localField: '_id'
+})
 // === custom middleware to handle hashing password
 userSchema.pre('save', async function (next) {
     if (!this.isModified("password")) {
@@ -136,7 +142,7 @@ userSchema.methods.isPasswordMatched = async function (enteredPassword) {
 }
 
 //virtual method to populate created post
-userSchema.virtual("posts", {
+userSchema.virtual("post", {
     ref: "Post",
     foreignField: "user",
     localField: "_id",
