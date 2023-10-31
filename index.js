@@ -5,10 +5,11 @@ const dotenv = require('dotenv')
 dotenv.config()
 const express = require('express');
 const userRoutes = require("./route/users/user");
-const { errorHandler,notFound } = require("./middlewares/error/errorMandler");
+const { errorHandler, notFound } = require("./middlewares/error/errorMandler");
 const postRoute = require("./route/posts/post");
 const commentRoutes = require("./route/comments/comment");
 const emailMsgRoute = require("./route/EmailMsg/emailMsgRoute");
+const categoryRoute = require("./route/category/category");
 
 const port = process.env.PORT || 4000
 const app = express();
@@ -19,11 +20,13 @@ dbConnect();
 //Register
 app.use('/api/users', userRoutes);
 //Post Route
-app.use("/api/posts",postRoute);
+app.use("/api/posts", postRoute);
 //cmt userRoutes
-app.use("/api/comments",commentRoutes)
+app.use("/api/comments", commentRoutes)
 //email msg
 app.use("/api/email", emailMsgRoute);
+//category route
+app.use("/api/category", categoryRoute)
 //Login
 app.post("/api/users/login", (req, res) => {
     //business logic

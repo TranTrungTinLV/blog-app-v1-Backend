@@ -25,18 +25,22 @@ const createPostCtrl = expressAsyncHandler(async (req, res) => {
     }
     console.log(isProfane);
     // console.log(req.file)
-    const localPath = `public/images/posts/${req.file.fileName}.jpeg`;
+    // const localPath = `public/images/posts/${req.file.fileName}.jpeg`;
     //upload to cloudinary
-    const imgUploaded = await cloudinaryUploadImg(localPath);
+    // const imgUploaded = await cloudinaryUploadImg(localPath);
     // res.json(imgUploaded)
     try {
-        // const post = await Post.create(
-        //     { ...req.body, image: imgUploaded?.url, user: _id }
-        // )
-        // console.log(post);
-        res.json(imgUploaded);
+        const post = await Post.create(
+            {
+                ...req.body,
+                // image: imgUploaded?.url,
+                user: _id
+            }
+        )
+        console.log(post);
+        res.json(post);
         //Remove img cloudinary
-        fs.unlinkSync(localPath)
+        // fs.unlinkSync(localPath)
     } catch (error) {
         res.json(error)
     }
@@ -71,7 +75,7 @@ const fetchPostCtrl = expressAsyncHandler(async (req, res) => {
 })
 //-----------------
 //Update Post
-//-----------------
+//----------------- 
 const updatePostCtrl = expressAsyncHandler(async (req, res) => {
     console.log(req.user)
     const { id } = req.params;
