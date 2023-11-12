@@ -47,6 +47,9 @@ const loginUserCtrl = expressAsyncHandler(async (req, res) => {
             isAdmin: userFound?.isAdmin,
             token: generateToken(userFound?._id)
         })
+    }else{
+        res.status(401);
+        throw new Error("Invalid Login")
     }
 });
 

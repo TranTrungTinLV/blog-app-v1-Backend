@@ -2,6 +2,7 @@
 const bodyParser = require("body-parser");
 const dbConnect = require('./config/db/dbConnect');
 const dotenv = require('dotenv')
+const cors = require('cors')
 dotenv.config()
 const express = require('express');
 const userRoutes = require("./route/users/user");
@@ -16,6 +17,8 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 //MiddleWare
 app.use(bodyParser.json())
+//cors
+app.use(cors())
 dbConnect();
 //Register
 app.use('/api/users', userRoutes);
