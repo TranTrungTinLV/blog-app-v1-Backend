@@ -14,6 +14,7 @@ const createPostCtrl = expressAsyncHandler(async (req, res) => {
     const { _id } = req.user;
     // validateMongoId(req.body.user);
     //check for bad word
+    
     const filter = new Filter();
     const isProfane = filter.isProfane(req.body.title, req.body.description);
     //Block user if say isProfane
@@ -25,15 +26,15 @@ const createPostCtrl = expressAsyncHandler(async (req, res) => {
     }
     console.log(isProfane);
     // console.log(req.file)
-    // const localPath = `public/images/posts/${req.file.fileName}.jpeg`;
+    const localPath = `public/images/posts/${req.file.fileName}.jpeg`;
     //upload to cloudinary
-    // const imgUploaded = await cloudinaryUploadImg(localPath);
+    const imgUploaded = await cloudinaryUploadImg(localPath);
     // res.json(imgUploaded)
     try {
         const post = await Post.create(
             {
                 ...req.body,
-                // image: imgUploaded?.url,
+                image: imgUploaded?.url,
                 user: _id
             }
         )
@@ -49,9 +50,18 @@ const createPostCtrl = expressAsyncHandler(async (req, res) => {
 // Fetch all posts
 //---------------------
 const fetchPostsCtrl = expressAsyncHandler(async (req, res) => {
+    const hasCategory = req.query.category;
+    console.log("Category Received:", hasCategory); // This should show you the actual category received
     try {
-        const posts = await Post.find({}).populate('user')
-        res.json(posts)
+        if(hasCategory){
+            const posts = await Post.find({category: hasCategory}).populate('user')
+            res.json(posts);
+            
+        }else{
+            const posts = await Post.find({}).populate('user')
+            res.json(posts)
+            console.log("không thấy")
+        }
     } catch (error) { }
 })
 //-------------------
