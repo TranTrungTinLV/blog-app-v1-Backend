@@ -19,8 +19,8 @@ userRoutes.put("/unblock-user/:id", authMiddleWare, unBlockUserCtrl);
 userRoutes.post("/generate-verify-email-token", authMiddleWare, generationVerificationTokenCtrl);
 userRoutes.put("/verify-account", authMiddleWare, accountVerificationCtrl);
 userRoutes.get("/profile/:id", authMiddleWare, userProfileCtrl);
-userRoutes.put("/:id", authMiddleWare, updateUserCtrl);
-userRoutes.put("/:id", authMiddleWare, updateUserCtrl);
+userRoutes.put("/", authMiddleWare, updateUserCtrl);
+// userRoutes.put("/:id", authMiddleWare, updateUserCtrl);
 userRoutes.delete("/:id", deleteUserCtrl);
 userRoutes.get("/:id", fetchUserDetailsCtrl);
 

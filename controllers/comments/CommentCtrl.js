@@ -1,6 +1,7 @@
 const expressAsyncHandler = require("express-async-handler");
 const Comment = require("../../models/comment/Comment");
 const validateMongoId = require("../../utils/validateMongodbID");
+const blockUser = require("../../utils/blockUser");
 
 //-------------------------------------------------------------
 //Create
@@ -8,6 +9,8 @@ const validateMongoId = require("../../utils/validateMongodbID");
 const createCommentCtrl = expressAsyncHandler(async (req, res) => {
     //1.Get the user
     const user = req.user;
+    //check if user block
+    blockUser(user);
     //2.Get the post Id
     const { postId, description } = req.body;
     console.log(description);
@@ -59,7 +62,7 @@ const updateCommentCtrl = expressAsyncHandler(async (req, res) => {
         const update = await Comment.findByIdAndUpdate(
             id,
             {
-                post: req.body?.postId,  // Check if "postId" is in the request body
+                // post: req.body?.postId,  // Check if "postId" is in the request body
                 user: req?.user,         // Check if "user" is in the request body
                 description: req?.body?.description,  // Check if "description" is in the request body
             },

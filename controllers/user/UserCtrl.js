@@ -24,8 +24,6 @@ const userRegisterCtrl = expressAsyncHandler(async (req, res) => {
         res.json(user)
     }
     catch (error) {
-        console.log("có lỗi")
-        console.log(error)
         res.json(error)
     }
 });
@@ -37,6 +35,8 @@ const loginUserCtrl = expressAsyncHandler(async (req, res) => {
     // Check if user exists
     const userFound = await User.findOne({ email });
 
+    //check if blocked
+    if (userFound?.isBlocked) throw new Error("Access Denied You have been blocked")
     if (userFound && (await userFound.isPasswordMatched(password))) {
         res.json({
             _id: userFound?._id,
@@ -45,9 +45,10 @@ const loginUserCtrl = expressAsyncHandler(async (req, res) => {
             email: userFound?.email,
             profilePhoto: userFound?.profilePhoto,
             isAdmin: userFound?.isAdmin,
-            token: generateToken(userFound?._id)
+            token: generateToken(userFound?._id),
+            isVerified: userFound?.isAccountVerified,
         })
-    }else{
+    } else {
         res.status(401);
         throw new Error("Invalid Login")
     }
@@ -60,7 +61,7 @@ const loginUserCtrl = expressAsyncHandler(async (req, res) => {
 const fetchUserCtrl = expressAsyncHandler(async (req, res) => {
     console.log(req.headers);
     try {
-        const users = await User.find({});
+        const users = await User.find({}).populate("posts");
         res.json(users);
     } catch (error) {
         res.json(error)
@@ -105,9 +106,27 @@ const fetchUserDetailsCtrl = expressAsyncHandler(async (req, res) => {
 const userProfileCtrl = expressAsyncHandler(async (req, res) => {
     const { id } = req.params;
     validateMongoId(id);
+    //1. Find the login user
+    //2. Check this particular if the login user exists in the array of view(viewedBy)
+
+    //Get the login user
+    const loginUserId = req?.user?._id?.toString();
+    console.log("login", typeof loginUserId)
     try {
-        const myProfile = await User.findById(id).populate("post");
-        res.json(myProfile)
+        const myProfile = await User.findById(id).populate("post").populate("viewedBy");
+        const alreadyViewed = myProfile?.viewedBy?.find(user => {
+            console.log(user);
+            return user?._id?.toString() === loginUserId
+        });
+
+        if (alreadyViewed) {
+            res.json(myProfile)
+        } else {
+            const profile = await User.findByIdAndUpdate(myProfile?._id, {
+                $push: { viewedBy: loginUserId },
+            })
+            res.json(profile)
+        }
     } catch (error) {
         res.json(error)
     }
@@ -117,6 +136,8 @@ const userProfileCtrl = expressAsyncHandler(async (req, res) => {
 //---------------------
 const updateUserCtrl = expressAsyncHandler(async (req, res) => {
     const { _id } = req?.user;
+    //block user
+    blockUser(req?.user)
     validateMongoId(_id);
     const user = await User.findByIdAndUpdate(_id, {
         firstName: req?.body?.firstName,
@@ -153,50 +174,71 @@ const updatePassWordCtrl = expressAsyncHandler(async (req, res) => {
 //following
 //---------------------------
 const followingUserCtrl = expressAsyncHandler(async (req, res) => {
-    //1. Find user want follow and update it's follower field
+    //1.Find the user you want to follow and update it's followers field
     //2. Update the login user following field
     const { followId } = req.body;
     const loginUserId = req.user.id;
-    // console.log({
-    //     followId,
-    //     loginUserId
-    // })
-    //1. Find user want follow and update it's follower field
-    await User.findByIdAndUpdate(followId, {
-        $push: {
-            followers: loginUserId,
+
+    //find the target user and check if the login id exist
+    const targetUser = await User.findById(followId);
+
+    const alreadyFollowing = targetUser?.followers?.find(
+        user => user?.toString() === loginUserId.toString()
+    );
+
+    if (alreadyFollowing) throw new Error("You have already followed this user");
+
+    //1. Find the user you want to follow and update it's followers field
+    await User.findByIdAndUpdate(
+        followId,
+        {
+            $push: { followers: loginUserId },
+            isFollowing: true,
         },
-        isFollowing: true,
-    }, { new: true })
+        { new: true }
+    );
+
     //2. Update the login user following field
-    await User.findByIdAndUpdate(loginUserId, {
-        $push: {
-            following: followId
-        }
-    }, { new: true })
-    res.json("You have successfully follow this user")
+    await User.findByIdAndUpdate(
+        loginUserId,
+        {
+            $push: { following: followId },
+        },
+        { new: true }
+    );
+    res.json("You have successfully followed this user");
 })
 //-----------------
 //unFollow
 //-----------------
 const unFollowerCtrl = expressAsyncHandler(async (req, res) => {
-    const { unfollowId } = req.body;
+    const { unFollowId } = req.body;
     const loginUserId = req.user.id;
-    await User.findByIdAndUpdate(unfollowId, {
-        $pull: {
-            followers: unfollowId
+
+    await User.findByIdAndUpdate(
+        unFollowId,
+        {
+            $pull: { followers: loginUserId },
+            isFollowing: false,
         },
-        isFollowing: false,
-    }, { new: true });
-    await User.findByIdAndUpdate(loginUserId, {
-        $pull: { following: unfollowId },
-    }, { new: true });
-    res.json("You have unfollowing")
+        { new: true }
+    );
+
+    await User.findByIdAndUpdate(
+        loginUserId,
+        {
+            $pull: { following: unFollowId },
+        },
+        { new: true }
+    );
+
+    res.json("You have successfully unfollowed this user");
 })
 //-----------------
 //Block user
 //-----------------
 const blockUserCtrl = expressAsyncHandler(async (req, res) => {
+    console.log(req.params);
     const { id } = req.params;
     validateMongoId(id);
     const user = await User.findByIdAndUpdate(id, {
@@ -226,14 +268,20 @@ const generationVerificationTokenCtrl = expressAsyncHandler(async (req, res, nex
     const loginUser = req.user.id;
     const user = await User.findById(loginUser);
     console.log(user)
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
     // console.log(loginUser)
-    const verificationToken = await user.createAccountVerificationToken();
-    console.log(verificationToken);
+    const verificationToken = await user?.createAccountVerificationToken();
     //save the user
     await user.save();
+
+    console.log(verificationToken);
+
     //build your message
-    const resetURL = `If you were request to verify your account, verify now within 10 minutes, otherwise ignore thi message <a href="http://localhost:3000/${verificationToken}">Click see</a>`
+    const resetURL = `If you were request to verify your account, verify now within 10 minutes, otherwise ignore thi message <a href="http://localhost:3000/verify-token/${verificationToken}">Click see</a>`
     const { userEmail } = req.body;
+    console.log(userEmail)
     let config = {
         service: 'gmail',
         auth: {
@@ -263,18 +311,17 @@ const generationVerificationTokenCtrl = expressAsyncHandler(async (req, res, nex
 
     let message = {
         from: "trantintin1989@gmail.com",
-        to: userEmail,
+        to: user?.email,
         subject: "Verify your account",
         html: mail
     }
 
     transporter.sendMail(message)
         .then(() => {
-
+            res.json(resetURL)
         }).catch(error => {
             return res.status(500).json({ error })
         })
-    res.json(resetURL)
 })
 //---------------
 //Account Verification
@@ -310,7 +357,7 @@ const ForgotPassWordToken = expressAsyncHandler(async (req, res) => {
         await user.save();
 
         //build your message
-        const resetURL = `If you were request to verify your password, verify now within 10 minutes, otherwise ignore thi message <a href="http://localhost:3000/${token}">Click see</a>`
+        const resetURL = `If you were request to verify your password, verify now within 10 minutes, otherwise ignore thi message <a href="http://localhost:3000/reset-password/${token}">Click see</a>`
         let config = {
             service: 'gmail',
             auth: {
@@ -387,17 +434,23 @@ const passwordResetCtrl = expressAsyncHandler(async (req, res) => {
 //---------------------
 const profilePhotoUploadCtrl = expressAsyncHandler(async (req, res) => {
     const { _id } = req.user;
-
+    //block user
+    // blockUserCtrl(req?.user)
     // console.log(req.file)
     const localPath = `public/images/profile/${req.file.fileName}.jpeg`;
     //upload to cloudinary
-    const imgUploaded = await cloudinaryUploadImg(localPath);
-    const foundUser = await User.findByIdAndUpdate(_id, {
-        profilePhoto: imgUploaded?.url
-    }, { new: true })
-    //remove the saved img
-    fs.unlinkSync(localPath)
-    console.log(imgUploaded)
-    res.json(imgUploaded)
+    try {
+        const imgUploaded = await cloudinaryUploadImg(localPath);
+        const foundUser = await User.findByIdAndUpdate(_id, {
+            profilePhoto: imgUploaded?.url
+        }, { new: true })
+        //remove the saved img
+        fs.unlinkSync(localPath)
+        console.log(imgUploaded)
+        res.json(imgUploaded)
+    } catch (error) {
+        console.error('Error in profilePhotoUploadCtrl:', error);
+        res.status(500).json({ message: 'An error occurred', error: error.message });
+    }
 })
 module.exports = { userRegisterCtrl, loginUserCtrl, fetchUserCtrl, deleteUserCtrl, fetchUserDetailsCtrl, userProfileCtrl, updateUserCtrl, updatePassWordCtrl, followingUserCtrl, unFollowerCtrl, blockUserCtrl, unBlockUserCtrl, generationVerificationTokenCtrl, accountVerificationCtrl, ForgotPassWordToken, passwordResetCtrl, profilePhotoUploadCtrl };

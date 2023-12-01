@@ -106,6 +106,12 @@ userSchema.virtual('posts', {
     foreignField: 'user',
     localField: '_id'
 })
+
+// Account Type
+userSchema.virtual('accountType').get(function(){
+    const totalFollowers = this.followers?.length;
+    return totalFollowers >= 1 ? "Pro Account" : "Starter Account";
+})
 // === custom middleware to handle hashing password
 userSchema.pre('save', async function (next) {
     if (!this.isModified("password")) {
@@ -133,6 +139,8 @@ userSchema.methods.createPasswordResetToken = async function () {
     this.passwordResetExpires = Date.now() + 30 * 60 * 1000; //10 minutes
     return resetToken;
 }
+
+
 
 //match password using mongoose methods
 userSchema.methods.isPasswordMatched = async function (enteredPassword) {
