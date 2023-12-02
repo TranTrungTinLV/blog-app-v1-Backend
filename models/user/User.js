@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-
+const bcrypt = require("bcrypt")
+const crypto = require("crypto")
 //create schema
 const userSchema = new mongoose.Schema(
     {
@@ -99,8 +100,57 @@ const userSchema = new mongoose.Schema(
     }
 );
 
+//virtual method to populate create post
+userSchema.virtual('posts', {
+    ref: 'Post',
+    foreignField: 'user',
+    localField: '_id'
+})
+
+// Account Type
+userSchema.virtual('accountType').get(function(){
+    const totalFollowers = this.followers?.length;
+    return totalFollowers >= 1 ? "Pro Account" : "Starter Account";
+})
+// === custom middleware to handle hashing password
+userSchema.pre('save', async function (next) {
+    if (!this.isModified("password")) {
+        next();
+    };
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+});
+
+//Verify account
+userSchema.methods.createAccountVerificationToken = async function () {
+    //create a token 
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    this.accountVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+    this.accountVerificationTokenExpires = Date.now() + 30 * 60 * 1000 //10 minutes
+    return verificationToken
+}
+
+//Password reset/forget
+userSchema.methods.createPasswordResetToken = async function () {
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    // console.log({ resetToken })
+    this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest("hex");
+    this.passwordResetExpires = Date.now() + 30 * 60 * 1000; //10 minutes
+    return resetToken;
+}
+
+
+
+//match password using mongoose methods
+userSchema.methods.isPasswordMatched = async function (enteredPassword) {
+    const isMatched = await bcrypt.compare(enteredPassword, this.password);
+    // console.log('Password matched:', isMatched);
+    return isMatched;
+}
+
 //virtual method to populate created post
-userSchema.virtual("posts", {
+userSchema.virtual("post", {
     ref: "Post",
     foreignField: "user",
     localField: "_id",
