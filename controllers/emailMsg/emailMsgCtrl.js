@@ -3,7 +3,7 @@ const nodemailer = require('nodemailer');
 const EmailMsg = require("../../models/EmailMesaging/EmailMesaging");
 const Filter = require('bad-words')
 const sendEmailMsgCtrl = expressAsyncHandler(async (req, res) => {
-    console.log(req.user);
+    // console.log(req.user);
     const { to, subject, message } = req.body
     //get the message
     const emailMessage = subject + ' ' + message;
@@ -11,7 +11,7 @@ const sendEmailMsgCtrl = expressAsyncHandler(async (req, res) => {
     const filter = new Filter();
     const isProfane = filter.isProfane(emailMessage);
     if(isProfane) throw new Error("Email sent failed, because it contains profane words")
-    console.log(emailMessage)
+    // console.log(emailMessage)
     try {
         const transporter = nodemailer.createTransport({
             service: "gmail",

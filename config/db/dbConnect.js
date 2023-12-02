@@ -5,9 +5,9 @@ const dbConnect = async () => {
             useNewUrlParser: true, useUnifiedTopology: true
         });
         
-        console.log("Db is Connected Successfully")
+        // console.log("Db is Connected Successfully")
     } catch (error) {
-        console.log(error.message)
+        // console.log(error.message)
     }
 }
 module.exports = dbConnect;

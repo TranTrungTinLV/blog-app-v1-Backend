@@ -11,7 +11,7 @@ const blockUser = require("../../utils/blockUser");
 //------------------------
 
 const createPostCtrl = expressAsyncHandler(async (req, res) => {
-    console.log(req.file)
+    // console.log(req.file)
     const { _id } = req.user;
     //block user
     blockUser(req.user);
@@ -27,7 +27,7 @@ const createPostCtrl = expressAsyncHandler(async (req, res) => {
         });
         throw new Error(`Creating failed because it contains profane words and you have been blocked `)
     }
-    console.log(isProfane);
+    // console.log(isProfane);
 
     //Prevent user account is a starter account
     if(req?.user?.accountType === "Starter Account"&& req?.user?.postCount >= 2) throw new Error("Starter account can only create two posts");
@@ -53,8 +53,8 @@ const createPostCtrl = expressAsyncHandler(async (req, res) => {
         },{
             new:true
         });
-        console.log(req.user)
-        console.log(post);
+        // console.log(req.user)
+        // console.log(post);
         res.json(post);
         //Remove img cloudinary
         fs.unlinkSync(localPath)
@@ -67,7 +67,7 @@ const createPostCtrl = expressAsyncHandler(async (req, res) => {
 //---------------------
 const fetchPostsCtrl = expressAsyncHandler(async (req, res) => {
     const hasCategory = req.query.category;
-    console.log("Category Received:", hasCategory); // This should show you the actual category received
+    // console.log("Category Received:", hasCategory); // This should show you the actual category received
     try {
         if (hasCategory) {
             const posts = await Post.find({ category: hasCategory }).populate('user').populate('comments').sort('-createdAt')
@@ -76,7 +76,7 @@ const fetchPostsCtrl = expressAsyncHandler(async (req, res) => {
         } else {
             const posts = await Post.find({}).populate('user').populate('comments').sort('-createdAt')
             res.json(posts)
-            console.log("không thấy")
+            // console.log("không thấy")
         }
     } catch (error) { }
 })
@@ -103,7 +103,7 @@ const fetchPostCtrl = expressAsyncHandler(async (req, res) => {
 //Update Post
 //----------------- 
 const updatePostCtrl = expressAsyncHandler(async (req, res) => {
-    console.log(req.user)
+    // console.log(req.user)
     const { id } = req.params;
     validateMongoId(id);
     try {

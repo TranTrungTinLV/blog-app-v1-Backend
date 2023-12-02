@@ -13,7 +13,7 @@ const createCommentCtrl = expressAsyncHandler(async (req, res) => {
     blockUser(user);
     //2.Get the post Id
     const { postId, description } = req.body;
-    console.log(description);
+    // console.log(description);
     try {
         const comment = await Comment.create({
             post: postId,
@@ -72,7 +72,7 @@ const updateCommentCtrl = expressAsyncHandler(async (req, res) => {
             }
         );
         res.json(update);
-        console.log(update);
+        // console.log(update);
     } catch (error) {
         res.json(error);
     }
