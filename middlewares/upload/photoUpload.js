@@ -6,23 +6,16 @@ const multerStorage = multer.memoryStorage();
 
 //file type checking
 const multerFilter = (req, file, cb) => {
-    const supportedFormats = ["image/jpeg", "image/png", "image/bmp", "image/tiff", "image/gif"];
-    // Kiểm tra xem định dạng file có được hỗ trợ không
-    if (supportedFormats.includes(file.mimetype)) {
-        cb(null, true); // Chấp nhận file nếu định dạng được hỗ trợ
-    } else {
-        cb(new Error("Unsupported file format"), false); // Từ chối nếu định dạng không được hỗ trợ
-    }
     
     //check file type
-    // if (file.mimetype.startsWith("image")) {
-    //     cb(null, true)
-    // } else {
-    //     cb({
-    //         message: "Unsupported file format",
-    //     }),
-    //         false
-    // }
+    if (file.mimetype.startsWith("image")) {
+        cb(null, true)
+    } else {
+        cb({
+            message: "Unsupported file format",
+        }),
+            false
+    }
 }
 
 const photoUpload = multer({
