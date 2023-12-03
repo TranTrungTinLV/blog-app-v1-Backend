@@ -279,7 +279,7 @@ const generationVerificationTokenCtrl = expressAsyncHandler(async (req, res, nex
     // console.log(verificationToken);
 
     //build your message
-    const resetURL = `If you were request to verify your account, verify now within 10 minutes, otherwise ignore thi message <a href="http://localhost:3000/verify-token/${verificationToken}">Click see</a>`
+    const resetURL = `If you were request to verify your account, verify now within 10 minutes, otherwise ignore thi message <a href="${process.env.BASE_URL}/verify-token/${verificationToken}">Click see</a>`
     const { userEmail } = req.body;
     // console.log(userEmail)
     let config = {
@@ -357,7 +357,7 @@ const ForgotPassWordToken = expressAsyncHandler(async (req, res) => {
         await user.save();
 
         //build your message
-        const resetURL = `If you were request to verify your password, verify now within 10 minutes, otherwise ignore thi message <a href="http://localhost:3000/reset-password/${token}">Click see</a>`
+        const resetURL = `If you were request to verify your password, verify now within 10 minutes, otherwise ignore thi message <a href="${process.env.BASE_URL}/reset-password/${token}">Click see</a>`
         let config = {
             service: 'gmail',
             auth: {
