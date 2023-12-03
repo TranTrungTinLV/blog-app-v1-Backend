@@ -6,15 +6,12 @@ const multerStorage = multer.memoryStorage();
 
 //file type checking
 const multerFilter = (req, file, cb) => {
-
-    // Liệt kê các định dạng hình ảnh được hỗ trợ
     const supportedFormats = ["image/jpeg", "image/png", "image/bmp", "image/tiff", "image/gif"];
-
-    // Kiểm tra xem định dạng file có được hỗ trợ không
+    // Kiểm tra nếu định dạng file nằm trong danh sách hỗ trợ
     if (supportedFormats.includes(file.mimetype)) {
-        cb(null, true); // Chấp nhận file nếu định dạng được hỗ trợ
+        cb(null, true);
     } else {
-        cb(new Error("Unsupported file format"), false); // Từ chối nếu định dạng không được hỗ trợ
+        cb(new Error("Unsupported file format"), false);
     }
 }
 
@@ -44,18 +41,22 @@ const profilePhotoResize = async (req, res, next) => {
 //Post Image Resizing
 const postImgResize = async (req, res, next) => {
     if (!req.file) return next();
-    req.file.fileName = `user-${Date.now()}-${req.file.originalname}`;
-    // console.log(`Resize`, req.file);
-    // Đọc file từ buffer
-    const image = await jimp.read(req.file.buffer);
+    try {
+        req.file.fileName = `user-${Date.now()}-${req.file.originalname}`;
+        // console.log(`Resize`, req.file);
+        // Đọc file từ buffer
+        const image = await jimp.read(req.file.buffer);
 
-    image.resize(500, 500);
-    // image.toFormat('jpeg');
+        image.resize(500, 500);
+        // image.toFormat('jpeg');
 
-    // Đảm bảo bạn sử dụng req.file.fileName thay vì req.file.filename
-    await image.writeAsync(path.join(`public/images/posts/${req.file.fileName}.jpeg`));
+        // Đảm bảo bạn sử dụng req.file.fileName thay vì req.file.filename
+        await image.writeAsync(path.join(`public/images/posts/${req.file.fileName}.jpeg`));
 
-    next();
+        next();
+    } catch (error) {
+        next(error);
+    }
 }
 
 
