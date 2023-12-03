@@ -1,63 +1,67 @@
 const multer = require('multer');
 const jimp = require('jimp');
 const path = require('path');
+const sharp = require('sharp');
+
 //storage
 const multerStorage = multer.memoryStorage();
 
 //file type checking
 const multerFilter = (req, file, cb) => {
-    const supportedFormats = ["image/jpeg", "image/png", "image/bmp", "image/tiff", "image/gif"];
-    // Kiểm tra nếu định dạng file nằm trong danh sách hỗ trợ
-    if (supportedFormats.includes(file.mimetype)) {
+    if (file.mimetype.startsWith("image")) {
         cb(null, true);
     } else {
         cb(new Error("Unsupported file format"), false);
     }
 }
 
+//Image Resizing with sharp
+const resizeImage = async (req, outputSize, outputPath) => {
+    if (!req.file) return;
+
+    req.file.fileName = `user-${Date.now()}-${req.file.originalname}`;
+
+    // Sử dụng sharp để thay đổi kích thước và lưu hình ảnh
+    await sharp(req.file.buffer)
+        .resize(outputSize, outputSize)
+        .toFormat('jpeg') // Chuyển đổi sang jpeg, bạn có thể thay đổi hoặc loại bỏ nếu muốn giữ nguyên định dạng
+        .toFile(outputPath);
+};
+
 const photoUpload = multer({
     storage: multerStorage,
     fileFilter: multerFilter,
-    limits: { fileSize: 2000000 }
+    limits: { fileSize: 10 * 1024 * 1024 },
 });
+    // public/images/profile/${req.file.fileName}.jpeg
 
 //Image Resizing
 const profilePhotoResize = async (req, res, next) => {
-    if (!req.file) return next();
-    req.file.fileName = `user-${Date.now()}-${req.file.originalname}`;
-    // console.log(`Resize`, req.file);
-    // Đọc file từ buffer
-    const image = await jimp.read(req.file.buffer);
+   //check if there is no file
+  if (!req.file) return next();
+  req.file.filename = `user-${Date.now()}-${req.file.originalname}`;
 
-    image.resize(250, 250);
-    // image.toFormat('jpeg');
-
-    // Đảm bảo bạn sử dụng req.file.fileName thay vì req.file.filename
-    await image.writeAsync(path.join(`public/images/profile/${req.file.fileName}.jpeg`));
-
-    next();
-}
+  await sharp(req.file.buffer)
+    .resize(250, 250)
+    .toFormat("jpeg")
+    .jpeg({ quality:90 })
+    .toFile(path.join(`public/images/profile/${req.file.filename}`));
+  next();
+};
 
 //Post Image Resizing
 const postImgResize = async (req, res, next) => {
-    if (!req.file) return next();
-    try {
-        req.file.fileName = `user-${Date.now()}-${req.file.originalname}`;
-        // console.log(`Resize`, req.file);
-        // Đọc file từ buffer
-        const image = await jimp.read(req.file.buffer);
+    //check if there is no file
+  if (!req.file) return next();
+  req.file.filename = `user-${Date.now()}-${req.file.originalname}`;
 
-        image.resize(500, 500);
-        // image.toFormat('jpeg');
-
-        // Đảm bảo bạn sử dụng req.file.fileName thay vì req.file.filename
-        await image.writeAsync(path.join(`public/images/posts/${req.file.fileName}.jpeg`));
-
-        next();
-    } catch (error) {
-        next(error);
-    }
-}
+  await sharp(req.file.buffer)
+    .resize(500, 500)
+    .toFormat("jpeg")
+    .jpeg({ quality: 90 })
+    .toFile(path.join(`public/images/posts/${req.file.filename}`));
+  next();
+};
 
 
 module.exports = { photoUpload, profilePhotoResize, postImgResize };
