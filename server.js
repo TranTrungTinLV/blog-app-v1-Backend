@@ -7,10 +7,10 @@ dbConnect();
 
 
 
-console.log(process.env)
+// console.log(process.env)
 
 const port = 3000;
 app.listen(port, () => {
-    console.log(`Hello ${port}`)
+    // console.log(`Hello ${port}`)
 })
 

@@ -59,7 +59,7 @@ const loginUserCtrl = expressAsyncHandler(async (req, res) => {
 //--------------------
 
 const fetchUserCtrl = expressAsyncHandler(async (req, res) => {
-    console.log(req.headers);
+    // console.log(req.headers);
     try {
         const users = await User.find({}).populate("posts");
         res.json(users);
@@ -111,11 +111,11 @@ const userProfileCtrl = expressAsyncHandler(async (req, res) => {
 
     //Get the login user
     const loginUserId = req?.user?._id?.toString();
-    console.log("login", typeof loginUserId)
+    // console.log("login", typeof loginUserId)
     try {
         const myProfile = await User.findById(id).populate("post").populate("viewedBy");
         const alreadyViewed = myProfile?.viewedBy?.find(user => {
-            console.log(user);
+            // console.log(user);
             return user?._id?.toString() === loginUserId
         });
 
@@ -136,8 +136,8 @@ const userProfileCtrl = expressAsyncHandler(async (req, res) => {
 //---------------------
 const updateUserCtrl = expressAsyncHandler(async (req, res) => {
     const { _id } = req?.user;
-    //block user
-    blockUser(req?.user)
+
+
     validateMongoId(_id);
     const user = await User.findByIdAndUpdate(_id, {
         firstName: req?.body?.firstName,
@@ -148,7 +148,7 @@ const updateUserCtrl = expressAsyncHandler(async (req, res) => {
         new: true,
         runValidators: true
     })
-    console.log(user)
+    // console.log(user)
     res.json(user)
 });
 
@@ -238,7 +238,7 @@ const unFollowerCtrl = expressAsyncHandler(async (req, res) => {
 //Block user
 //-----------------
 const blockUserCtrl = expressAsyncHandler(async (req, res) => {
-    console.log(req.params);
+    // console.log(req.params);
     const { id } = req.params;
     validateMongoId(id);
     const user = await User.findByIdAndUpdate(id, {
@@ -267,7 +267,7 @@ const unBlockUserCtrl = expressAsyncHandler(async (req, res) => {
 const generationVerificationTokenCtrl = expressAsyncHandler(async (req, res, next) => {
     const loginUser = req.user.id;
     const user = await User.findById(loginUser);
-    console.log(user)
+    // console.log(user)
     if (!user) {
         return res.status(404).json({ message: "User not found" });
     }
@@ -276,12 +276,12 @@ const generationVerificationTokenCtrl = expressAsyncHandler(async (req, res, nex
     //save the user
     await user.save();
 
-    console.log(verificationToken);
+    // console.log(verificationToken);
 
     //build your message
     const resetURL = `If you were request to verify your account, verify now within 10 minutes, otherwise ignore thi message <a href="http://localhost:3000/verify-token/${verificationToken}">Click see</a>`
     const { userEmail } = req.body;
-    console.log(userEmail)
+    // console.log(userEmail)
     let config = {
         service: 'gmail',
         auth: {
@@ -353,7 +353,7 @@ const ForgotPassWordToken = expressAsyncHandler(async (req, res) => {
     res.send("forget password")
     try {
         const token = await user.createPasswordResetToken();
-        console.log(token)
+        // console.log(token)
         await user.save();
 
         //build your message
@@ -446,7 +446,7 @@ const profilePhotoUploadCtrl = expressAsyncHandler(async (req, res) => {
         }, { new: true })
         //remove the saved img
         fs.unlinkSync(localPath)
-        console.log(imgUploaded)
+        // console.log(imgUploaded)
         res.json(imgUploaded)
     } catch (error) {
         console.error('Error in profilePhotoUploadCtrl:', error);

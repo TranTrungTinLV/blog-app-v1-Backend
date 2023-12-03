@@ -50,7 +50,7 @@ app.use(notFound)
 app.use(errorHandler)
 
 app.listen(port, () => {
-    console.log(`Hello API`)
+    // console.log(`Hello API`)
 })
 
 //authen

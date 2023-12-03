@@ -27,7 +27,7 @@ const photoUpload = multer({
 const profilePhotoResize = async (req, res, next) => {
     if (!req.file) return next();
     req.file.fileName = `user-${Date.now()}-${req.file.originalname}`;
-    console.log(`Resize`, req.file);
+    // console.log(`Resize`, req.file);
     // Đọc file từ buffer
     const image = await jimp.read(req.file.buffer);
 
@@ -44,7 +44,7 @@ const profilePhotoResize = async (req, res, next) => {
 const postImgResize = async (req, res, next) => {
     if (!req.file) return next();
     req.file.fileName = `user-${Date.now()}-${req.file.originalname}`;
-    console.log(`Resize`, req.file);
+    // console.log(`Resize`, req.file);
     // Đọc file từ buffer
     const image = await jimp.read(req.file.buffer);
 
